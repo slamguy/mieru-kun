@@ -159,19 +159,25 @@
       <div class="viewer">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        <div id="marker"></div> </div>
+        <div id="marker"></div>
+      </div>
 
       <div id="controls">
         <button id="filterBtn">色補正 ON</button>
         <button id="typeBtn">タイプ: ノーマル</button>
+        <button id="torchBtn">🔦 ライト OFF</button>
       </div>
 
       <div id="info-container" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <div id="color-preview"></div>
         <div id="info" style="margin-top: 0;">色: - / R:- G:- B:-</div>
       </div>
-    </div>
-  </div>
+
+      <div style="margin-top: 24px; text-align: left;">
+        <p style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 8px; padding-left: 4px;">最近調べた色</p>
+        <ul id="historyList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+          </ul>
+      </div>
 
   <!-- JS -->
   <script src="script.js"></script>

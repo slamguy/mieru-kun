@@ -211,6 +211,35 @@ canvas.addEventListener("click", (e) => {
         marker.style.left = (e.clientX - rect.left) + "px";
         marker.style.top = (e.clientY - rect.top) + "px";
     }
+    // --- 既存の処理（マーカー移動など）のあとに追記 ---
+
+    // 【追加】音声読み上げ
+    const uttr = new SpeechSynthesisUtterance(colorName);
+    uttr.lang = "ja-JP"; // 日本語に設定
+    uttr.rate = 1.2;     // 読み上げスピード（1.0〜1.5くらいがおすすめ）
+    speechSynthesis.cancel(); // 連続タップ時に前の声を止める
+    speechSynthesis.speak(uttr);
+
+    // 【追加】履歴リストへの追加
+    const historyList = document.getElementById("historyList");
+    const li = document.createElement("li");
+    // 履歴1行のデザイン
+    li.style.cssText = "display: flex; align-items: center; gap: 12px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease;";
+    li.innerHTML = `
+        <div style="width: 24px; height: 24px; border-radius: 6px; background: rgb(${r},${g},${b}); border: 1px solid #eee;"></div>
+        <div style="flex: 1;">
+            <div style="font-weight: bold; font-size: 14px;">${colorName}</div>
+            <div style="font-size: 11px; color: #888;">R:${r} G:${g} B:${b}</div>
+        </div>
+    `;
+    
+    // 新しいものを一番上に表示
+    historyList.insertBefore(li, historyList.firstChild);
+
+    // 履歴が増えすぎないよう、5件を超えたら一番古いものを消す
+    if (historyList.children.length > 5) {
+        historyList.removeChild(historyList.lastChild);
+    }
 });
 
 /* ===============================
@@ -243,4 +272,30 @@ startBtn.onclick = () => {
 
 cameraBtn.onclick = () => {
   startCamera();
+};
+
+/* ===============================
+   フラッシュライト（懐中電灯）制御
+=============================== */
+let torchOn = false;
+const torchBtn = document.getElementById("torchBtn");
+
+torchBtn.onclick = async () => {
+    if (mode !== "camera") return;
+    const stream = video.srcObject;
+    if (!stream) return;
+    const track = stream.getVideoTracks()[0];
+    
+    try {
+        torchOn = !torchOn;
+        // カメラのライトを制御する命令
+        await track.applyConstraints({
+            advanced: [{ torch: torchOn }]
+        });
+        torchBtn.innerText = torchOn ? "🔦 ライト ON" : "🔦 ライト OFF";
+    } catch (err) {
+        console.error("Torch error:", err);
+        alert("このデバイスはライト制御に対応していないか、背面カメラではありません。");
+        torchOn = false;
+    }
 };
