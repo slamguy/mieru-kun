@@ -1,142 +1,31 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>色覚支援アプリ 見えるくん</title>
-
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f2f2f2;
-      text-align: center;
-      margin: 0;
-    }
-
-    .container {
-      position: relative;
-      width: 100%;
-    }
-
-    .viewer {
-      width: 100%;
-      margin-top: 16px;
-      position: relative;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-    }
-
-    .viewer video,
-    .viewer canvas {
-      width: 100%;
-      border-radius: 12px;
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
-    }
-
-    #info {
-      margin-top: 10px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    #marker {
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      border: 3px solid white;
-      box-shadow: 0 0 4px rgba(0,0,0,0.5);
-      border-radius: 50%;
-      pointer-events: none;
-      display: none;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-    }
-
-    #color-preview {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 2px solid white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      display: none;
-    }
-
-    .action-area {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .upload-box {
-      cursor: pointer;
-      border: 2px dashed #aaa;
-      border-radius: 16px;
-      padding: 32px;
-      background: white;
-    }
-
-    .screen {
-      display: none;
-      min-height: 100vh;
-      padding: 32px 16px;
-      box-sizing: border-box;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    #startScreen.active {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .app-title {
-      font-size: 36px;
-      margin-top: 80px;
-    }
-
-    .subtitle {
-      color: #555;
-      margin-bottom: 40px;
-    }
-
-    .primary-btn {
-      width: 100%;
-      height: 52px;
-      background: #7b2cff;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #controls {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    #controls button {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      background: white;
-      font-size: 12px;
-    }
+    /* あなたが送ってくれた style.css の内容を統合しました */
+    body { font-family: sans-serif; background: #f2f2f2; text-align: center; margin: 0; }
+    .container { position: relative; width: 100%; }
+    .viewer { width: 100%; margin-top: 16px; position: relative; -webkit-transform: translateZ(0); transform: translateZ(0); }
+    .viewer video, .viewer canvas { width: 100%; border-radius: 12px; -webkit-backface-visibility: hidden; backface-visibility: hidden; image-rendering: auto; }
+    #info { margin-top: 10px; font-size: 18px; font-weight: bold; }
+    #marker { position: absolute; width: 24px; height: 24px; border: 3px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 50%; pointer-events: none; display: none; transform: translate(-50%, -50%); z-index: 10; }
+    #color-preview { width: 32px; height: 32px; border-radius: 6px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: none; }
+    .action-area { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; padding: 0 16px; }
+    .upload-box { cursor: pointer; border: 2px dashed #aaa; border-radius: 16px; padding: 32px; background: white; }
+    .screen { display: none; min-height: 100vh; padding: 32px 16px; box-sizing: border-box; }
+    .screen.active { display: block; }
+    #startScreen.active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .app-title { font-size: 36px; margin-top: 80px; }
+    .subtitle { color: #555; margin-bottom: 40px; }
+    .primary-btn { width: 100%; height: 52px; background: #7b2cff; color: white; border: none; border-radius: 14px; font-size: 16px; cursor: pointer; }
+    #controls { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    #controls button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: white; font-size: 12px; }
   </style>
 </head>
-
 <body>
-
   <div id="startScreen" class="screen active">
     <h1 class="app-title">見えるくん</h1>
     <p class="subtitle">色を音と名前でサポート</p>
@@ -146,7 +35,6 @@
   <div id="mainScreen" class="screen">
     <div class="container">
       <h2>色覚支援アプリ</h2>
-
       <div class="action-area">
         <button class="primary-btn" id="cameraBtn">📷 カメラで撮影</button>
         <label class="upload-box">
@@ -154,47 +42,35 @@
           <input type="file" id="imageInput" accept="image/*" hidden />
         </label>
       </div>
-
       <div class="viewer">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
         <div id="marker"></div>
       </div>
-
       <div id="controls">
         <button id="filterBtn">色補正 ON</button>
         <button id="typeBtn">タイプ: ノーマル</button>
         <button id="torchBtn">🔦 ライト OFF</button>
       </div>
-
       <div id="info-container" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <div id="color-preview"></div>
-        <div id="info" style="margin-top: 0;">色: - / R:- G:- B:-</div>
+        <div id="info">色: - / R:- G:- B:-</div>
       </div>
-
-      <div style="margin-top: 24px; text-align: left;">
-        <p style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 8px; padding-left: 4px;">最近調べた色</p>
-        <ul id="historyList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
-        </ul>
+      <div style="margin-top: 24px; text-align: left; padding: 0 16px;">
+        <p style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 8px;">最近調べた色</p>
+        <ul id="historyList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;"></ul>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
 
-  <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; pointer-events: none;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position: absolute;">
     <defs>
-      <filter id="protan-filter" color-interpolation-filters="sRGB">
-        <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0 0.558, 0.442, 0, 0, 0 0, 0.242, 0.758, 0, 0 0, 0, 0, 1, 0" />
-      </filter>
-      <filter id="deutan-filter" color-interpolation-filters="sRGB">
-        <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0 0.7, 0.3, 0, 0, 0 0, 0.3, 0.7, 0, 0 0, 0, 0, 1, 0" />
-      </filter>
-      <filter id="tritan-filter" color-interpolation-filters="sRGB">
-        <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0 0, 0.433, 0.567, 0, 0 0, 0.475, 0.525, 0, 0 0, 0, 0, 1, 0" />
-      </filter>
+      <filter id="protan-filter"><feColorMatrix type="matrix" values="1 0 0 0 0 0.7 1 0 0 0 0.7 0 1 0 0 0 0 0 1 0" /></filter>
+      <filter id="deutan-filter"><feColorMatrix type="matrix" values="1 0.7 0 0 0 0 1 0 0 0 0 0.7 1 0 0 0 0 0 1 0" /></filter>
+      <filter id="tritan-filter"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0.7 0 0 0 0.7 1 0 0 0 0 0 1 0" /></filter>
     </defs>
   </svg>
 </body>
-
 </html>
