@@ -78,12 +78,21 @@ typeBtn.onclick = () => {
 };
 
 function applyFilter() {
-    if (!filterActive || currentType === "normal") {
-        video.style.filter = "none";
-        canvas.style.filter = "none";
-    } else {
-        video.style.filter = `url(#${currentType}-filter)`;
-        canvas.style.filter = `url(#${currentType}-filter)`;
+    const filterValue = (!filterActive || currentType === "normal") 
+        ? "none" 
+        : `url(#${currentType}-filter)`;
+    
+    // 1. フィルターを適用する
+    video.style.filter = filterValue;
+    canvas.style.filter = filterValue;
+
+    // 2. iPhone用の「再描画」のおまじない
+    // 一瞬だけ非表示にしてすぐに戻すことで、画面を強制リフレッシュさせます
+    if (mode === "camera") {
+        video.style.opacity = "0.99";
+        setTimeout(() => {
+            video.style.opacity = "1";
+        }, 1);
     }
 }
 
