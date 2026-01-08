@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Assist MVP V2</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; }
+        #wrap { display: flex; flex-direction: column; align-items: center; }
+        video, canvas { width: 95vw; max-width: 500px; margin: 5px 0; border: 2px solid #444; border-radius: 8px; }
+        #info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+        }
+        #marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid yellow;
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+        }
+        #controls {
+            margin: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background: #444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="wrap">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="marker"></div>
+
+    <div id="info">色: - / R: - G: - B: -</div>
+
+    <div id="controls">
+        <button id="filterBtn">色補正 ON</button>
+        <button id="typeBtn">タイプ: ノーマル</button>
+        <input type="file" id="imageInput" accept="image/*">
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
