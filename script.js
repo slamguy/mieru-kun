@@ -1,285 +1,93 @@
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-const cameraBtn = document.getElementById("cameraBtn");
-const imageInput = document.getElementById("imageInput");
-
-const info = document.getElementById("info");
-
-let filterOn = true;
-let filterType = "normal"; // normal / protan / deutan / tritan
-let mode = "camera";      // camera / image
-let loadedImage = null;
-
-let lastTap = null;
-let frameColors = [];
-const FRAME_BUFFER_SIZE = 8;
-
-/* ===============================
-   画像読み込み
-=============================== */
-imageInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const img = new Image();
-    img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        loadedImage = img;
-        mode = "image";
-        update();
-    };
-    img.src = URL.createObjectURL(file);
-});
-
-/* ===============================
-   色名取得
-*/
-function getColorName(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-
-    if (max === min) {
-        h = 0;
-        s = 0;
-    } else {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h *= 60;
-    }
-
-    // ===== 無彩色 =====
-    if (l < 0.12) return "黒";
-    if (l > 0.88) return "白";
-    if (s < 0.12) return "灰色";
-
-    let baseColor = "";
-
-    // ===== 色相判定（細分化）=====
-    if (h < 10 || h >= 350) baseColor = "赤";
-    else if (h < 25) baseColor = "朱色";
-    else if (h < 45) baseColor = "橙";
-    else if (h < 60) baseColor = "黄";
-    else if (h < 85) baseColor = "黄緑";
-    else if (h < 150) baseColor = "緑";
-    else if (h < 190) baseColor = "青緑";
-    else if (h < 210) baseColor = "水色";
-    else if (h < 250) baseColor = "青";
-    else if (h < 270) baseColor = "紺";
-    else if (h < 300) baseColor = "青紫";
-    else if (h < 330) baseColor = "紫";
-    else baseColor = "ピンク";
-
-    // ===== 明度・彩度で修飾 =====
-    if (l > 0.75) return `明るい${baseColor}`;
-    if (l < 0.25) return `暗い${baseColor}`;
-    if (s < 0.3) return `くすんだ${baseColor}`;
-
-    return baseColor;
-}
-
-/* ===============================
-   色覚補正
-=============================== */
-/* 改良版：行列演算による補正ロジック */
-function colorBlindFilter(r, g, b) {
-    if (!filterOn || filterType === "normal") return [r, g, b];
-
-    let nr, ng, nb;
-
-    if (filterType === "protan") {
-        // 1型（赤色弱）向け：赤の情報を緑と青にシフト
-        nr = r * 0.56667 + g * 0.43333;
-        ng = r * 0.55833 + g * 0.44167;
-        nb = r * 0.0 + g * 0.24167 + b * 0.75833;
-    } else if (filterType === "deutan") {
-        // 2型（緑色弱）向け：緑の情報を赤と青にシフト
-        nr = r * 0.625 + g * 0.375;
-        ng = r * 0.7 + g * 0.3;
-        nb = r * 0.0 + g * 0.3 + b * 0.7;
-    } else if (filterType === "tritan") {
-        // 3型（青色弱）向け
-        nr = r * 0.95 + g * 0.05;
-        ng = r * 0.0 + g * 0.43333 + b * 0.56667;
-        nb = r * 0.0 + g * 0.475 + b * 0.525;
-    }
-
-    // 誤差（本来の色とシミュレーションの差）を計算し、見えるチャンネルに配分
-    const errR = r - nr;
-    const errG = g - ng;
-    const errB = b - nb;
-
-    // 補正値の加算（Daltonizationの核となるステップ）
-    const finalR = r + (0.0 * errR) + (0.0 * errG) + (0.0 * errB);
-    const finalG = g + (0.7 * errR) + (1.0 * errG) + (0.0 * errB);
-    const finalB = b + (0.7 * errR) + (0.0 * errG) + (1.0 * errB);
-
-    return [
-        Math.min(255, Math.max(0, finalR)),
-        Math.min(255, Math.max(0, finalG)),
-        Math.min(255, Math.max(0, finalB))
-    ];
-}
-
-/* ===============================
-   カメラ起動
-=============================== */
-async function startCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-    });
-    video.srcObject = stream;
-
-    video.onloadeddata = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        mode = "camera";
-        update();
-    };
-}
-
-/* ===============================
-   描画ループ（改良版：CSSフィルタ方式）
-=============================== */
-function update() {
-    // 1. カメラ映像または画像をキャンバスに描画する
-    if (mode === "camera" && video.readyState >= 2) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    } else if (mode === "image" && loadedImage) {
-        ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
-    } else {
-        // まだ映像が準備できていない場合は次へ
-        requestAnimationFrame(update);
-        return;
-    }
-
-    // 2. フィルタの適用（CSSを使って一括で色を変える）
-    if (filterOn && filterType !== "normal") {
-        // HTMLのSVGで定義したIDを指定する
-        canvas.style.filter = `url(#${filterType}-filter)`;
-    } else {
-        // フィルタOFFまたはノーマルの場合は解除
-        canvas.style.filter = "none";
-    }
-
-    // ループを継続
-    requestAnimationFrame(update);
-}
-
-/* ===============================
-   タップで色取得（マーカー・プレビュー対応版）
-=============================== */
-canvas.addEventListener("click", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    // 1. タップされた座標を計算（Canvas内の位置）
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-    // 2. ピクセルデータを取得
-    const imgData = ctx.getImageData(x, y, 1, 1).data;
-    const r = imgData[0];
-    const g = imgData[1];
-    const b = imgData[2];
-    
-    // 3. 色名を取得
-    const colorName = getColorName(r, g, b);
-
-    // 4. テキスト表示の更新
-    info.innerText = `色: ${colorName} / R:${r} G:${g} B:${b}`;
-
-    // 5. 【追加】プレビューボックスに色を付ける
-    const preview = document.getElementById("color-preview");
-    if (preview) {
-        preview.style.display = "block";
-        preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-    }
-
-    // 6. 【追加】マーカーをタップした位置に動かす
-    const marker = document.getElementById("marker");
-    if (marker) {
-        marker.style.display = "block";
-        // 表示上の座標（クリックした瞬間のマウス位置）に合わせる
-        marker.style.left = (e.clientX - rect.left) + "px";
-        marker.style.top = (e.clientY - rect.top) + "px";
-    }
-    // --- 既存の処理（マーカー移動など）のあとに追記 ---
-
-    // 【追加】音声読み上げ
-    const uttr = new SpeechSynthesisUtterance(colorName);
-    uttr.lang = "ja-JP"; // 日本語に設定
-    uttr.rate = 1.2;     // 読み上げスピード（1.0〜1.5くらいがおすすめ）
-    speechSynthesis.cancel(); // 連続タップ時に前の声を止める
-    speechSynthesis.speak(uttr);
-
-    // 【追加】履歴リストへの追加
-    const historyList = document.getElementById("historyList");
-    const li = document.createElement("li");
-    // 履歴1行のデザイン
-    li.style.cssText = "display: flex; align-items: center; gap: 12px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease;";
-    li.innerHTML = `
-        <div style="width: 24px; height: 24px; border-radius: 6px; background: rgb(${r},${g},${b}); border: 1px solid #eee;"></div>
-        <div style="flex: 1;">
-            <div style="font-weight: bold; font-size: 14px;">${colorName}</div>
-            <div style="font-size: 11px; color: #888;">R:${r} G:${g} B:${b}</div>
-        </div>
-    `;
-    
-    // 新しいものを一番上に表示
-    historyList.insertBefore(li, historyList.firstChild);
-
-    // 履歴が増えすぎないよう、5件を超えたら一番古いものを消す
-    if (historyList.children.length > 5) {
-        historyList.removeChild(historyList.lastChild);
-    }
-});
-
-/* ===============================
-   UIボタン
-=============================== */
-
-document.getElementById("filterBtn").onclick = () => {
-    filterOn = !filterOn;
-};
-
-document.getElementById("typeBtn").onclick = () => {
-    const order = ["normal", "protan", "deutan", "tritan"];
-    filterType = order[(order.indexOf(filterType) + 1) % order.length];
-
-    document.getElementById("typeBtn").innerText = `タイプ: ${
-        { normal:"ノーマル", protan:"1型色覚", deutan:"2型色覚", tritan:"3型色覚" }[filterType]
-    }`;
-};
-
-// ===== スタート画面切り替え =====
 const startBtn = document.getElementById("startBtn");
 const startScreen = document.getElementById("startScreen");
 const mainScreen = document.getElementById("mainScreen");
-
-startBtn.onclick = () => {
-  // 画面切り替え
-  startScreen.classList.remove("active");
-  mainScreen.classList.add("active");
-};
-
-cameraBtn.onclick = () => {
-  startCamera();
-};
-
-/* ===============================
-   フラッシュライト（懐中電灯）制御
-=============================== */
-let torchOn = false;
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+const info = document.getElementById("info");
+const cameraBtn = document.getElementById("cameraBtn");
+const imageInput = document.getElementById("imageInput");
+const filterBtn = document.getElementById("filterBtn");
+const typeBtn = document.getElementById("typeBtn");
+const marker = document.getElementById("marker");
+const colorPreview = document.getElementById("color-preview");
 const torchBtn = document.getElementById("torchBtn");
+const historyList = document.getElementById("historyList");
 
+let mode = "none"; 
+let filterActive = true;
+let currentType = "normal"; // normal, protan, deutan, tritan
+let torchOn = false;
+
+// スタートボタン
+startBtn.onclick = () => {
+    startScreen.classList.remove("active");
+    mainScreen.classList.add("active");
+};
+
+// カメラ起動
+cameraBtn.onclick = async () => {
+    mode = "camera";
+    video.style.display = "block";
+    canvas.style.display = "none";
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false
+        });
+        video.srcObject = stream;
+    } catch (err) {
+        alert("カメラの起動に失敗しました。設定を確認してください。");
+    }
+};
+
+// 画像アップロード
+imageInput.onchange = (e) => {
+    mode = "image";
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            video.style.display = "none";
+            canvas.style.display = "block";
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+// 色補正の切り替え
+filterBtn.onclick = () => {
+    filterActive = !filterActive;
+    filterBtn.innerText = filterActive ? "色補正 ON" : "色補正 OFF";
+    applyFilter();
+};
+
+// タイプの切り替え
+typeBtn.onclick = () => {
+    const types = ["normal", "protan", "deutan", "tritan"];
+    let idx = types.indexOf(currentType);
+    currentType = types[(idx + 1) % types.length];
+    typeBtn.innerText = `タイプ: ${currentType === "normal" ? "ノーマル" : currentType}`;
+    applyFilter();
+};
+
+function applyFilter() {
+    if (!filterActive || currentType === "normal") {
+        video.style.filter = "none";
+        canvas.style.filter = "none";
+    } else {
+        video.style.filter = `url(#${currentType}-filter)`;
+        canvas.style.filter = `url(#${currentType}-filter)`;
+    }
+}
+
+// ライト機能（iPhone対応）
 torchBtn.onclick = async () => {
     if (mode !== "camera") return;
     const stream = video.srcObject;
@@ -288,14 +96,99 @@ torchBtn.onclick = async () => {
     
     try {
         torchOn = !torchOn;
-        // カメラのライトを制御する命令
         await track.applyConstraints({
             advanced: [{ torch: torchOn }]
         });
         torchBtn.innerText = torchOn ? "🔦 ライト ON" : "🔦 ライト OFF";
     } catch (err) {
-        console.error("Torch error:", err);
-        alert("このデバイスはライト制御に対応していないか、背面カメラではありません。");
-        torchOn = false;
+        alert("このカメラはライト制御に対応していません。");
     }
 };
+
+// クリックで色判定（読み上げ・履歴追加）
+const actionTarget = [video, canvas];
+actionTarget.forEach(el => {
+    el.addEventListener("click", (e) => {
+        let r, g, b;
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (mode === "camera") {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            const tempCtx = tempCanvas.getContext("2d");
+            tempCtx.drawImage(video, 0, 0);
+            const scaleX = video.videoWidth / rect.width;
+            const scaleY = video.videoHeight / rect.height;
+            const pixel = tempCtx.getImageData(x * scaleX, y * scaleY, 1, 1).data;
+            r = pixel[0]; g = pixel[1]; b = pixel[2];
+        } else {
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const pixel = ctx.getImageData(x * scaleX, y * scaleY, 1, 1).data;
+            r = pixel[0]; g = pixel[1]; b = pixel[2];
+        }
+
+        const colorName = getColorName(r, g, b);
+        
+        // 表示更新
+        info.innerText = `色: ${colorName} / R:${r} G:${g} B:${b}`;
+        colorPreview.style.display = "block";
+        colorPreview.style.backgroundColor = `rgb(${r},${g},${b})`;
+        
+        // マーカー移動
+        marker.style.display = "block";
+        marker.style.left = `${x}px`;
+        marker.style.top = `${y}px`;
+
+        // 【新機能1】音声読み上げ（iPhoneマナーモード時は音が出ません）
+        try {
+            const uttr = new SpeechSynthesisUtterance(colorName);
+            uttr.lang = "ja-JP";
+            speechSynthesis.cancel();
+            speechSynthesis.speak(uttr);
+        } catch (e) {}
+
+        // 【新機能2】履歴追加
+        try {
+            const li = document.createElement("li");
+            li.style.cssText = "display: flex; align-items: center; gap: 10px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);";
+            li.innerHTML = `
+                <div style="width: 20px; height: 20px; border-radius: 4px; background: rgb(${r},${g},${b}); border: 1px solid #ccc;"></div>
+                <div style="font-size: 14px; font-weight: bold;">${colorName}</div>
+            `;
+            historyList.insertBefore(li, historyList.firstChild);
+            if (historyList.children.length > 5) historyList.removeChild(historyList.lastChild);
+        } catch (e) {}
+    });
+});
+
+// 色名判定ロジック
+function getColorName(r, g, b) {
+    const colors = [
+        { name: "赤", r: 255, g: 0, b: 0 },
+        { name: "緑", r: 0, g: 255, b: 0 },
+        { name: "青", r: 0, g: 0, b: 255 },
+        { name: "黄", r: 255, g: 255, b: 0 },
+        { name: "白", r: 255, g: 255, b: 255 },
+        { name: "黒", r: 0, g: 0, b: 0 },
+        { name: "オレンジ", r: 255, g: 165, b: 0 },
+        { name: "紫", r: 128, g: 0, b: 128 },
+        { name: "ピンク", r: 255, g: 192, b: 203 },
+        { name: "茶色", r: 165, g: 42, b: 42 },
+        { name: "グレー", r: 128, g: 128, b: 128 },
+        { name: "水色", r: 173, g: 216, b: 230 }
+    ];
+    let minDist = Infinity;
+    let closestColor = "不明";
+    colors.forEach(c => {
+        const dist = Math.sqrt((r - c.r)**2 + (g - c.g)**2 + (b - c.b)**2);
+        if (dist < minDist) {
+            minDist = dist;
+            closestColor = c.name;
+        }
+    });
+    return closestColor;
+}
