@@ -4,134 +4,145 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>色覚支援アプリ</title>
+  <title>色覚支援アプリ 見えるくん</title>
 
   <style>
     body {
-  font-family: sans-serif;
-  background: #f2f2f2;
-  text-align: center;
-  margin: 0;
-}
+      font-family: sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      margin: 0;
+    }
 
-.container {
-  position: relative;
-  width: 100%;
-}
+    .container {
+      position: relative;
+      width: 100%;
+    }
 
-.viewer {
-  width: 100%;
-  margin-top: 16px;
-  position: relative; /* マーカーの位置基準 */
-  /* iPhoneでフィルタを効きやすくする設定 */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-}
+    .viewer {
+      width: 100%;
+      margin-top: 16px;
+      position: relative;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
 
-.viewer video,
-.viewer canvas {
-  width: 100%;
-  border-radius: 12px;
-  /* iPhone Safari用のフィルタ適用を強力にする設定 */
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  image-rendering: auto;
-}
+    .viewer video,
+    .viewer canvas {
+      width: 100%;
+      border-radius: 12px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
 
-#info {
-  margin-top: 10px;
-  font-size: 18px;
-  font-weight: bold;
-}
+    #info {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
 
-#marker {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  border: 3px solid white;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
-  border-radius: 50%;
-  pointer-events: none;
-  display: none;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-}
+    #marker {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 3px solid white;
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
 
-#color-preview {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  display: none;
-}
+    #color-preview {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: none;
+    }
 
-.action-area {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 16px;
-}
+    .action-area {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
 
-.upload-box {
-  cursor: pointer;
-  border: 2px dashed #aaa;
-  border-radius: 16px;
-  padding: 32px;
-  background: white;
-}
+    .upload-box {
+      cursor: pointer;
+      border: 2px dashed #aaa;
+      border-radius: 16px;
+      padding: 32px;
+      background: white;
+    }
 
-.screen {
-  display: none;
-  min-height: 100vh;
-  padding: 32px 16px;
-  box-sizing: border-box;
-}
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 32px 16px;
+      box-sizing: border-box;
+    }
 
-.screen.active {
-  display: block;
-}
+    .screen.active {
+      display: block;
+    }
 
-#startScreen.active {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
+    #startScreen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-.app-title {
-  font-size: 36px;
-  margin-top: 80px;
-}
+    .app-title {
+      font-size: 36px;
+      margin-top: 80px;
+    }
 
-.subtitle {
-  color: #555;
-  margin-bottom: 40px;
-}
+    .subtitle {
+      color: #555;
+      margin-bottom: 40px;
+    }
 
-.primary-btn {
-  width: 100%;
-  height: 52px;
-  background: #7b2cff;
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  cursor: pointer;
-}
+    .primary-btn {
+      width: 100%;
+      height: 52px;
+      background: #7b2cff;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    #controls button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      font-size: 12px;
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- ===== スタート画面 ===== -->
   <div id="startScreen" class="screen active">
     <h1 class="app-title">見えるくん</h1>
     <p class="subtitle">色を音と名前でサポート</p>
     <button id="startBtn" class="primary-btn">▶ スタート</button>
   </div>
 
-  <!-- ===== メイン画面 ===== -->
   <div id="mainScreen" class="screen">
     <div class="container">
       <h2>色覚支援アプリ</h2>
@@ -164,34 +175,23 @@
       <div style="margin-top: 24px; text-align: left;">
         <p style="font-size: 14px; color: #666; font-weight: bold; margin-bottom: 8px; padding-left: 4px;">最近調べた色</p>
         <ul id="historyList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
-          </ul>
+        </ul>
       </div>
+    </div>
+  </div>
 
-  <!-- JS -->
   <script src="script.js"></script>
 
-  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width: 0; height: 0; pointer-events: none;">
     <defs>
-      <filter id="protan-filter">
-        <feColorMatrix type="matrix" values="
-          1, 0, 0, 0, 0
-          0.7, 1, 0, 0, 0
-          0.7, 0, 1, 0, 0
-          0, 0, 0, 1, 0" />
+      <filter id="protan-filter" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0 0.558, 0.442, 0, 0, 0 0, 0.242, 0.758, 0, 0 0, 0, 0, 1, 0" />
       </filter>
-      <filter id="deutan-filter">
-        <feColorMatrix type="matrix" values="
-          1, 0.7, 0, 0, 0
-          0, 1, 0, 0, 0
-          0, 0.7, 1, 0, 0
-          0, 0, 0, 1, 0" />
+      <filter id="deutan-filter" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0 0.7, 0.3, 0, 0, 0 0, 0.3, 0.7, 0, 0 0, 0, 0, 1, 0" />
       </filter>
-      <filter id="tritan-filter">
-        <feColorMatrix type="matrix" values="
-          1, 0, 0, 0, 0
-          0, 1, 0.7, 0, 0
-          0, 0.7, 1, 0, 0
-          0, 0, 0, 1, 0" />
+      <filter id="tritan-filter" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0 0, 0.433, 0.567, 0, 0 0, 0.475, 0.525, 0, 0 0, 0, 0, 1, 0" />
       </filter>
     </defs>
   </svg>
