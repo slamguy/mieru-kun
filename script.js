@@ -70,7 +70,7 @@ filterBtn.onclick = () => {
 
 // タイプの切り替え
 typeBtn.onclick = () => {
-    const types = ["normal", "protan", "deutan", "tritan"];
+    const types = ["通常", "1型色覚", "2型色覚", "3型色覚"];
     let idx = types.indexOf(currentType);
     currentType = types[(idx + 1) % types.length];
     typeBtn.innerText = `タイプ: ${currentType === "normal" ? "ノーマル" : currentType}`;
