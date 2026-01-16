@@ -70,10 +70,20 @@ filterBtn.onclick = () => {
 
 // タイプの切り替え
 typeBtn.onclick = () => {
-    const types = ["通常", "1型色覚", "2型色覚", "3型色覚"];
+    const types = ["normal", "protan", "deutan", "tritan"];
+    const typeNames = {
+        "normal": "標準（ノーマル）",
+        "protan": "1型 (赤が見えにくい方)",
+        "deutan": "2型 (緑が見えにくい方)",
+        "tritan": "3型 (青が見えにくい方)"
+    };
+
     let idx = types.indexOf(currentType);
     currentType = types[(idx + 1) % types.length];
-    typeBtn.innerText = `タイプ: ${currentType === "normal" ? "ノーマル" : currentType}`;
+    
+    // ボタンの表示を日本語に変更
+    typeBtn.innerText = `タイプ: ${typeNames[currentType]}`;
+    
     applyFilter();
 };
 
